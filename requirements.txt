@@ -1,0 +1,3 @@
+PyGithub==v1.55
+DingtalkChatbot==1.5.3
+sh==1.14.0
