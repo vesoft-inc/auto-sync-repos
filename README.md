@@ -7,13 +7,14 @@ Sync all commits from one repo to another automatically by creating pull request
 
 ```yaml
 name: My Workflow
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: '0 8 * * *'
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Run action
-      uses: vesoft-inc/auto-sync-repos@master
+    - uses: vesoft-inc/auto-sync-repos@master
       with:
         gh-pat: ${{ secrets.GH_PAT }}
         username: bot-name
