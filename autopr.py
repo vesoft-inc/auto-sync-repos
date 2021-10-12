@@ -2,7 +2,6 @@ import os
 import re
 import sh
 import time
-import configparser
 
 from pathlib import Path
 from github import Github
@@ -12,16 +11,20 @@ from sh import git
 
 CURR_DIR = Path(__file__).parent.absolute()
 
-dingtalk_access_token = os.getenv("DING_ACCESS_TOKEN")
-dingtalk_secret = os.getenv("DING_SECRET")
+dingtalk_access_token = os.environ("INPUT_DINGTALK_ACCESS_TOKEN")
+dingtalk_secret = os.environ("INPUT_DINGTALK_SECRET")
+enable_dingtalk_notification = len(dingtalk_access_token) > 0 and len(dingtalk_secret) > 0
 dingtalk_bot = DingtalkChatbot(
     webhook=f"https://oapi.dingtalk.com/robot/send?access_token={dingtalk_access_token}",
     secret=dingtalk_secret,
 )
 
+username = os.environ("INPUT_USERNAME")
+email = os.environ("INPUT_EMAIL")
+
 gh_url = "https://github.com"
 
-token = os.getenv('GH_PAT')
+token = os.environ('INPUT_GH_PAT')
 gh = Github(token)
 
 prog = re.compile(r"(.*)\(#(\d+)\)(?:$|\n).*")
@@ -74,8 +77,8 @@ def init(clone_url, ent_dir):
         sh.rm("-rf", ent_dir)
     git.clone("--single-branch", clone_url, ent_dir)
     with sh.pushd(ent_dir):
-        git.config("user.name", "nebula-bots")
-        git.config("user.email", "nebula-bots@vesoft.com")
+        git.config("user.name", username)
+        git.config("user.email", email)
 
 
 def must_create_dir(filename):
@@ -274,7 +277,7 @@ def main(community_repo, enterprise_repo):
     succ_prs = '\n\n'.join(succ_pr_list) if succ_pr_list else "None"
     err_prs = '\n\n'.join(err_pr_list) if err_pr_list else "None"
 
-    if len(succ_pr_list) > 0 or len(err_pr_list) > 0:
+    if enable_dingtalk_notification and (len(succ_pr_list) > 0 or len(err_pr_list) > 0):
         text = f"### Auto Merge Status\nMerge successfully:\n\n{succ_prs}\n\nFailed to merge:\n\n{err_prs}"
         dingtalk_bot.send_markdown(title='Auto Merge Status', text=text, is_at_all=False)
 
@@ -286,8 +289,7 @@ def main(community_repo, enterprise_repo):
 
 
 if __name__ == "__main__":
-    config = configparser.ConfigParser()
-    config.read(CURR_DIR / 'repos.ini')
-    for section in config.sections():
-        print(">>> Start to sync section: {}".format(section))
-        main(config[section]['community_repo'], config[section]['enterprise_repo'])
+    src_repo = os.environ("INPUT_SOURCE_REPO")
+    target_repo = os.environ("INPUT_TARGET_REPO")
+
+    main(src_repo, target_repo)

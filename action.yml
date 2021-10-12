@@ -1,0 +1,30 @@
+name: 'Auto Sync Repos'
+description: 'Sync two repos by creating pull request automatically'
+inputs:
+  gh-pat:
+    description: 'GitHub personal access token'
+    required: true
+  username:
+    description: 'GitHub bot username for git operations locally'
+    required: true
+  email:
+    description: 'GitHub bot email for git operations locally'
+    required: true
+  source-repo:
+    description: 'source repository'
+    required: true
+  target-repo:
+    description: 'target repository'
+    required: false
+    default: ${{ github.repository }}
+  dingtalk-access-token:
+    description: 'dingtalk access token'
+    required: false
+    default: ''
+  dingtalk-secret:
+    description: 'dingtalk secret'
+    required: false
+    default: ''
+runs:
+  using: "docker"
+  image: "Dockerfile"
