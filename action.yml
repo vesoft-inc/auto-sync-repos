@@ -10,11 +10,11 @@ inputs:
   email:
     description: 'GitHub bot email for git operations locally'
     required: true
-  source-repo:
-    description: 'source repository'
+  from-repo:
+    description: 'from repository to current'
     required: true
-  target-repo:
-    description: 'target repository'
+  current-repo:
+    description: 'current repository'
     required: false
     default: ${{ github.repository }}
   dingtalk-access-token:

@@ -19,8 +19,7 @@ jobs:
         gh-pat: ${{ secrets.GH_PAT }}
         username: bot-name
         email: bot-name-example@vesoft.com
-        source-repo: vesoft-inc/nebula
-        target-repo: ${{ github.repository }}
+        from-repo: vesoft-inc/nebula
         dingtalk-access-token: ${{ secrets.DING_ACCESS_TOKEN }}
         dingtalk-secret: ${{ secrets.DING_SECRET }}
 ```

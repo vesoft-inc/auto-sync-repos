@@ -289,7 +289,7 @@ def main(community_repo, enterprise_repo):
 
 
 if __name__ == "__main__":
-    src_repo = os.environ("INPUT_SOURCE_REPO")
-    target_repo = os.environ("INPUT_TARGET_REPO")
+    src_repo = os.environ("INPUT_FROM_REPO")
+    target_repo = os.environ("INPUT_CURRENT_REPO")
 
     main(src_repo, target_repo)
