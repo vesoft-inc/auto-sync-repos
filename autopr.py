@@ -78,43 +78,50 @@ def init(clone_url, ent_dir):
         git.config("user.email", "nebula-bots@vesoft.com")
 
 
-def overwrite_conflict_files(pr, ent_dir):
+def must_create_dir(filename):
+    dirname = os.path.dirname(filename)
+    if len(dirname) > 0 and not os.path.exists(dirname):
+        sh.mkdir('-p', dirname)
+
+
+def overwrite_conflict_files(ci, ent_dir):
     print(">>> Overwrite PR conflict files")
     with sh.pushd(ent_dir):
-        for f in pr.get_files():
+        for f in ci.files:
             if f.status == "removed":
                 git.rm('-rf', f.filename)
             else:
+                must_create_dir(f.filename)
                 sh.curl("-fsSL", f.raw_url, "-o", f.filename)
             print(f"      {f.filename}")
 
 
-def commit_changes(pr, ci: Commit):
+def commit_changes(ci: Commit):
     author = ci.author()
     print(f">>> Commit changes by <{author.email}>")
     git.add(".")
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
-def apply_patch(comm_pr, comm_ci, ent_dir):
-    branch = f"pr-{comm_pr.number}"
+def apply_patch(branch, comm_ci, ent_dir):
     print(f">>> Apply patch file to {branch}")
     stopped = False
     with sh.pushd(ent_dir):
         patch = f"{branch}.patch"
         git.fetch("origin", "master")
         git.checkout("-b", branch, "origin/master")
-        sh.curl("-fsSL", comm_pr.patch_url, "-o", patch)
+        git_commit = comm_ci.commit
+        sh.curl("-fsSL", git_commit.html_url+'.patch', "-o", patch)
         try:
             git.am("--3way", patch)
             sh.rm("-rf", patch)
         except Exception:
             sh.rm("-rf", patch)
-            overwrite_conflict_files(comm_pr, ent_dir)
-            commit_changes(comm_pr, comm_ci)
+            overwrite_conflict_files(git_commit, ent_dir)
+            commit_changes(comm_ci)
             stopped = True
-        git.push("-uf", "origin", branch)
-    return (branch, stopped)
+        git.push("-u", "origin", branch)
+    return stopped
 
 
 def find_latest_community_commit_in_ent_repo(ent_commit: Commit, community_commits):
@@ -162,7 +169,7 @@ def append_migration_in_msg(repo, pr):
     return "{}\n\nMigrated from {}\n".format(body, pr_ref(repo, pr))
 
 
-def notify_author_by_comment(ent_repo, comm_ci, issue_num, org_members):
+def notify_author_by_comment(ent_repo, comm_ci, issue_num, comm_pr_num, org_members):
     comment = ""
     if comm_ci.login() in org_members:
         comment += f"@{comm_ci.login()}\n"
@@ -170,16 +177,33 @@ def notify_author_by_comment(ent_repo, comm_ci, issue_num, org_members):
     else:
         print(f">>> The author {comm_ci.login()} is not in the orgnization, need not to notify him")
 
-    comment += "This PR will cause conflicts when applying patch. Please carefully compare all the changes in this PR to avoid overwriting legal codes. If you need to make changes, please make the commits on current branch."
+    comment += """This PR will cause conflicts when applying patch.
+Please carefully compare all the changes in this PR to avoid overwriting legal codes.
+If you need to make changes, please make the commits on current branch.
+
+You can use following commands to resolve the conflicts locally:
+
+```shell
+$ git clone git@github.com:vesoft-inc/nebula-ent.git
+$ cd nebula-ent
+$ git checkout -b pr-{} origin/master
+$ curl -fsSL "{}.patch" -o {}.patch
+$ git am -3 {}.patch
+# resolve the conflicts
+$ git am --continue
+$ git push -f origin pr-{}
+```
+"""
 
     issue = ent_repo.get_issue(issue_num)
-    issue.create_comment(comment)
+    issue.create_comment(comment.format(comm_pr_num, comm_ci.commit.html_url, comm_pr_num, comm_pr_num, comm_pr_num))
 
 
 def create_pr(comm_repo, ent_repo, comm_ci, org_members, ent_dir):
     try:
         merged_pr = comm_repo.get_pull(comm_ci.pr_num)
-        branch, stopped = apply_patch(merged_pr, comm_ci, ent_dir)
+        branch = "pr-{}".format(merged_pr.number)
+        stopped = apply_patch(branch, comm_ci, ent_dir)
         body = append_migration_in_msg(comm_repo, merged_pr)
         new_pr = ent_repo.create_pull(title=comm_ci.title, body=body, head=branch, base="master")
 
@@ -190,7 +214,7 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members, ent_dir):
         new_pr.add_to_labels('auto-sync')
 
         if stopped:
-            notify_author_by_comment(ent_repo, comm_ci, new_pr.number, org_members)
+            notify_author_by_comment(ent_repo, comm_ci, new_pr.number, comm_ci.pr_num, org_members)
             return (False, new_pr.number)
 
         if not new_pr.mergeable:
