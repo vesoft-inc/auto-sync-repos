@@ -14,11 +14,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - uses: vesoft-inc/auto-sync-repos@master
       with:
-        gh-pat: ${{ secrets.GH_PAT }}
-        username: bot-name
-        email: bot-name-example@vesoft.com
         from-repo: vesoft-inc/nebula
         dingtalk-access-token: ${{ secrets.DING_ACCESS_TOKEN }}
         dingtalk-secret: ${{ secrets.DING_SECRET }}

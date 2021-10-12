@@ -19,12 +19,9 @@ dingtalk_bot = DingtalkChatbot(
     secret=dingtalk_secret,
 )
 
-username = os.environ("INPUT_USERNAME")
-email = os.environ("INPUT_EMAIL")
-
 gh_url = "https://github.com"
 
-token = os.environ('INPUT_GH_PAT')
+token = os.environ('INPUT_GH_TOKEN')
 gh = Github(token)
 
 prog = re.compile(r"(.*)\(#(\d+)\)(?:$|\n).*")
@@ -71,32 +68,21 @@ def get_org_members(org_name):
     return [m.login for m in org.get_members()]
 
 
-def init(clone_url, ent_dir):
-    print(">>> Clone and config enterprise repo")
-    if ent_dir.exists():
-        sh.rm("-rf", ent_dir)
-    git.clone("--single-branch", clone_url, ent_dir)
-    with sh.pushd(ent_dir):
-        git.config("user.name", username)
-        git.config("user.email", email)
-
-
 def must_create_dir(filename):
     dirname = os.path.dirname(filename)
     if len(dirname) > 0 and not os.path.exists(dirname):
         sh.mkdir('-p', dirname)
 
 
-def overwrite_conflict_files(ci, ent_dir):
+def overwrite_conflict_files(ci):
     print(">>> Overwrite PR conflict files")
-    with sh.pushd(ent_dir):
-        for f in ci.files:
-            if f.status == "removed":
-                git.rm('-rf', f.filename)
-            else:
-                must_create_dir(f.filename)
-                sh.curl("-fsSL", f.raw_url, "-o", f.filename)
-            print(f"      {f.filename}")
+    for f in ci.files:
+        if f.status == "removed":
+            git.rm('-rf', f.filename)
+        else:
+            must_create_dir(f.filename)
+            sh.curl("-fsSL", f.raw_url, "-o", f.filename)
+        print(f"      {f.filename}")
 
 
 def commit_changes(ci: Commit):
@@ -106,24 +92,24 @@ def commit_changes(ci: Commit):
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
-def apply_patch(branch, comm_ci, ent_dir):
+def apply_patch(branch, comm_ci):
     print(f">>> Apply patch file to {branch}")
     stopped = False
-    with sh.pushd(ent_dir):
-        patch = f"{branch}.patch"
-        git.fetch("origin", "master")
-        git.checkout("-b", branch, "origin/master")
-        git_commit = comm_ci.commit
-        sh.curl("-fsSL", git_commit.html_url+'.patch', "-o", patch)
-        try:
-            git.am("--3way", patch)
-            sh.rm("-rf", patch)
-        except Exception:
-            sh.rm("-rf", patch)
-            overwrite_conflict_files(git_commit, ent_dir)
-            commit_changes(comm_ci)
-            stopped = True
-        git.push("-u", "origin", branch)
+    patch = f"{branch}.patch"
+    git.clean("-f")
+    git.fetch("origin", "master")
+    git.checkout("-b", branch, "origin/master")
+    git_commit = comm_ci.commit
+    sh.curl("-fsSL", git_commit.html_url+'.patch', "-o", patch)
+    try:
+        git.am("--3way", patch)
+        sh.rm("-rf", patch)
+    except Exception:
+        sh.rm("-rf", patch)
+        overwrite_conflict_files(git_commit)
+        commit_changes(comm_ci)
+        stopped = True
+    git.push("-u", "origin", branch)
     return stopped
 
 
@@ -202,11 +188,11 @@ $ git push -f origin pr-{}
     issue.create_comment(comment.format(comm_pr_num, comm_ci.commit.html_url, comm_pr_num, comm_pr_num, comm_pr_num))
 
 
-def create_pr(comm_repo, ent_repo, comm_ci, org_members, ent_dir):
+def create_pr(comm_repo, ent_repo, comm_ci, org_members):
     try:
         merged_pr = comm_repo.get_pull(comm_ci.pr_num)
         branch = "pr-{}".format(merged_pr.number)
-        stopped = apply_patch(branch, comm_ci, ent_dir)
+        stopped = apply_patch(branch, comm_ci)
         body = append_migration_in_msg(comm_repo, merged_pr)
         new_pr = ent_repo.create_pull(title=comm_ci.title, body=body, head=branch, base="master")
 
@@ -250,10 +236,7 @@ def main(community_repo, enterprise_repo):
     comm_repo = gh.get_repo(community_repo)
     ent_repo = gh.get_repo(enterprise_repo)
 
-    ent_dir = CURR_DIR / get_repo_name(enterprise_repo)
-
     org_members = get_org_members(get_org_name(community_repo))
-    init(ent_repo.clone_url.replace("github.com", f"{token}@github.com"), ent_dir)
 
     unmerged_community_commits = find_unmerged_community_commits_in_ent_repo(comm_repo, ent_repo)
     unmerged_community_commits.reverse()
@@ -261,7 +244,7 @@ def main(community_repo, enterprise_repo):
     succ_pr_list = []
     err_pr_list = []
     for ci in unmerged_community_commits:
-        res = create_pr(comm_repo, ent_repo, ci, org_members, ent_dir)
+        res = create_pr(comm_repo, ent_repo, ci, org_members)
         md = pr_link(comm_repo, ci.pr_num)
         if res[1] >= 0:
             md += " -> " + pr_link(ent_repo, res[1])
@@ -283,9 +266,6 @@ def main(community_repo, enterprise_repo):
 
     if len(unmerged_community_commits) == 0:
         print(">>> There's no any PRs to sync")
-
-    if ent_dir.exists():
-        sh.rm("-rf", ent_dir)
 
 
 if __name__ == "__main__":

@@ -1,18 +1,13 @@
 name: 'Auto Sync Repos'
 description: 'Sync two repos by creating pull request automatically'
 inputs:
-  gh-pat:
-    description: 'GitHub personal access token'
-    required: true
-  username:
-    description: 'GitHub bot username for git operations locally'
-    required: true
-  email:
-    description: 'GitHub bot email for git operations locally'
-    required: true
   from-repo:
     description: 'from repository to current'
     required: true
+  gh-token:
+    description: 'GitHub Token'
+    required: false
+    default: ${{ secrets.GITHUB_TOKEN }}
   current-repo:
     description: 'current repository'
     required: false
