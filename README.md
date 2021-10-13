@@ -1,9 +1,11 @@
 # Auto Sync Repos Action
 
-Sync all commits from one repo to another automatically by creating pull request.
+Sync all commits from one public repo to another private repo by creating pull request automatically.
 
 
 ## Usage
+
+In private repository workflow:
 
 ```yaml
 name: My Workflow
