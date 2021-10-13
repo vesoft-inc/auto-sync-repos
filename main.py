@@ -9,8 +9,6 @@ from dingtalkchatbot.chatbot import DingtalkChatbot
 from sh import git
 
 
-CURR_DIR = Path(__file__).parent.absolute()
-
 dingtalk_access_token = os.environ("INPUT_DINGTALK_ACCESS_TOKEN")
 dingtalk_secret = os.environ("INPUT_DINGTALK_SECRET")
 enable_dingtalk_notification = len(dingtalk_access_token) > 0 and len(dingtalk_secret) > 0

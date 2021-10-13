@@ -2,6 +2,19 @@
 
 Sync all commits from one public repo to another private repo by creating pull request automatically.
 
+## Inputs
+
+### `from-repo`
+
+**Required** The repository need to sync. Default `""`.
+
+### `dingtalk-access-token`
+
+**Required** The access token of dingtalk. Default `""`.
+
+### `dingtalk-secret`
+
+**Required** The secret of dingtalk. Default `""`.
 
 ## Usage
 
