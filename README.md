@@ -4,15 +4,19 @@ Sync all commits from one public repo to another private repo by creating pull r
 
 ## Inputs
 
-### `from-repo`
+### `from_repo`
 
-**Required** The repository need to sync. Default `""`.
+**Required** The repository need to sync.
 
-### `dingtalk-access-token`
+### `repo_token`
+
+**Required** The repository token to access the codebase.
+
+### `dingtalk_access_token`
 
 **Required** The access token of dingtalk. Default `""`.
 
-### `dingtalk-secret`
+### `dingtalk_secret`
 
 **Required** The secret of dingtalk. Default `""`.
 
@@ -32,7 +36,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: vesoft-inc/auto-sync-repos@master
       with:
-        from-repo: vesoft-inc/nebula
-        dingtalk-access-token: ${{ secrets.DING_ACCESS_TOKEN }}
-        dingtalk-secret: ${{ secrets.DING_SECRET }}
+        from_repo: vesoft-inc/nebula
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        dingtalk_access_token: ${{ secrets.DING_ACCESS_TOKEN }}
+        dingtalk_secret: ${{ secrets.DING_SECRET }}
 ```

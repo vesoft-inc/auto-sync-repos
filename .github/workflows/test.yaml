@@ -1,0 +1,15 @@
+name: test
+on:
+  schedule:
+    - cron: '20 8 * * *'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ./
+      with:
+        from_repo: vesoft-inc/auto-sync-repos
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        dingtalk_access_token: ${{ secrets.DING_ACCESS_TOKEN }}
+        dingtalk_secret: ${{ secrets.DING_SECRET }}

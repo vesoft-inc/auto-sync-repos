@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import re
 import sh
@@ -9,8 +11,8 @@ from dingtalkchatbot.chatbot import DingtalkChatbot
 from sh import git
 
 
-dingtalk_access_token = os.environ("INPUT_DINGTALK_ACCESS_TOKEN")
-dingtalk_secret = os.environ("INPUT_DINGTALK_SECRET")
+dingtalk_access_token = os.environ["INPUT_DINGTALK_ACCESS_TOKEN"]
+dingtalk_secret = os.environ["INPUT_DINGTALK_SECRET"]
 enable_dingtalk_notification = len(dingtalk_access_token) > 0 and len(dingtalk_secret) > 0
 dingtalk_bot = DingtalkChatbot(
     webhook=f"https://oapi.dingtalk.com/robot/send?access_token={dingtalk_access_token}",
@@ -19,7 +21,7 @@ dingtalk_bot = DingtalkChatbot(
 
 gh_url = "https://github.com"
 
-token = os.environ('INPUT_GH_TOKEN')
+token = os.environ['INPUT_REPO_TOKEN']
 gh = Github(token)
 
 prog = re.compile(r"(.*)\(#(\d+)\)(?:$|\n).*")
@@ -267,7 +269,7 @@ def main(community_repo, enterprise_repo):
 
 
 if __name__ == "__main__":
-    src_repo = os.environ("INPUT_FROM_REPO")
-    target_repo = os.environ("INPUT_CURRENT_REPO")
+    src_repo = os.environ["INPUT_FROM_REPO"]
+    target_repo = os.environ["GITHUB_REPOSITORY"]
 
     main(src_repo, target_repo)

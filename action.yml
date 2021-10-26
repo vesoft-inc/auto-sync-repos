@@ -2,22 +2,17 @@ name: 'Auto Sync Repos'
 author: yixinglu
 description: 'Sync two repos by creating pull request automatically'
 inputs:
-  from-repo:
+  from_repo:
     description: 'from repository to current'
     required: true
-  gh-token:
-    description: 'GitHub Token'
-    required: false
-    default: ${{ secrets.GITHUB_TOKEN }}
-  current-repo:
-    description: 'current repository'
-    required: false
-    default: ${{ github.repository }}
-  dingtalk-access-token:
+  repo_token:
+    description: 'repository token to access the codebase'
+    required: true
+  dingtalk_access_token:
     description: 'dingtalk access token'
     required: false
     default: ''
-  dingtalk-secret:
+  dingtalk_secret:
     description: 'dingtalk secret'
     required: false
     default: ''
