@@ -1,4 +1,5 @@
 name: 'Auto Sync Repos'
+author: yixinglu
 description: 'Sync two repos by creating pull request automatically'
 inputs:
   from-repo:
@@ -23,3 +24,7 @@ inputs:
 runs:
   using: "docker"
   image: "Dockerfile"
+
+branding:
+  icon: 'refresh-cw'
+  color: 'yellow'
