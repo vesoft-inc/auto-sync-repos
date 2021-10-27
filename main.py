@@ -89,6 +89,8 @@ def commit_changes(ci: Commit):
     author = ci.author()
     print(f">>> Commit changes by <{author.email}>")
     git.add(".")
+    git.config("--local", "user.name", author.name)
+    git.config("--local", "user.email", author.email)
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
@@ -173,8 +175,8 @@ If you need to make changes, please make the commits on current branch.
 You can use following commands to resolve the conflicts locally:
 
 ```shell
-$ git clone git@github.com:vesoft-inc/nebula-ent.git
-$ cd nebula-ent
+$ git clone git@github.com:{}.git
+$ cd {}
 $ git checkout -b pr-{} origin/master
 $ curl -fsSL "{}.patch" -o {}.patch
 $ git am -3 {}.patch
@@ -185,7 +187,7 @@ $ git push -f origin pr-{}
 """
 
     issue = ent_repo.get_issue(issue_num)
-    issue.create_comment(comment.format(comm_pr_num, comm_ci.commit.html_url, comm_pr_num, comm_pr_num, comm_pr_num))
+    issue.create_comment(comment.format(ent_repo.full_name, ent_repo.name, comm_pr_num, comm_ci.commit.html_url, comm_pr_num, comm_pr_num, comm_pr_num))
 
 
 def create_pr(comm_repo, ent_repo, comm_ci, org_members):
