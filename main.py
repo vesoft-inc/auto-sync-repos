@@ -89,6 +89,8 @@ def commit_changes(ci: Commit):
     author = ci.author()
     print(f">>> Commit changes by <{author.email}>")
     git.add(".")
+    git.config("--local", "user.name", author.name)
+    git.config("--local", "user.email", author.email)
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
