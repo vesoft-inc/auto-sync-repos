@@ -54,8 +54,10 @@ class Commit:
             return
         msg = prog.match(commit.commit.message)
         if msg:
-            self.title = msg.group(1).strip()
             self.pr_num = int(msg.group(2))
+            while msg:
+                self.title = msg.group(1).strip()
+                msg = prog.match(self.title)
         else:
             msg = title_re.match(commit.commit.message)
             if msg:
