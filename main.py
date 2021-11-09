@@ -151,7 +151,9 @@ def find_unmerged_community_commits_in_ent_repo(community_repo, ent_repo):
 
 def pr_ref(repo, pr):
     pr_num = pr if isinstance(pr, int) else pr.number
-    return "{}#{}".format(repo.full_name, pr_num)
+    if pr_num >= 0:
+        return "{}#{}".format(repo.full_name, pr_num)
+    return repo.full_name
 
 
 def pr_link(repo, pr):
@@ -260,7 +262,7 @@ def main(community_repo, enterprise_repo):
             print(f">>> {pr_ref(ent_repo, res[1])} has been migrated from {pr_ref(comm_repo, ci.pr_num)}")
         else:
             err_pr_list.append(md)
-            print(f">>> {pr_ref(comm_repo, ci.pr_num)} could not be merged into {ent_repo.full_name}")
+            print(f">>> {pr_ref(comm_repo, ci.pr_num)} could not be merged into {pr_ref(ent_repo, res[1])}")
             break
 
     succ_prs = '\n\n'.join(succ_pr_list) if succ_pr_list else "None"
