@@ -91,8 +91,6 @@ def commit_changes(ci: Commit):
     author = ci.author()
     print(f">>> Commit changes by <{author.email}>")
     git.add(".")
-    git.config("--local", "user.name", author.name)
-    git.config("--local", "user.email", author.email)
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
@@ -100,6 +98,8 @@ def apply_patch(branch, comm_ci):
     print(f">>> Apply patch file to {branch}")
     stopped = False
     patch = f"{branch}.patch"
+    git.config("--local", "user.name", author.name)
+    git.config("--local", "user.email", author.email)
     git.clean("-f")
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
