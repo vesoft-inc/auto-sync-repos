@@ -108,7 +108,8 @@ def apply_patch(branch, comm_ci):
     try:
         git.am("--3way", patch)
         sh.rm("-rf", patch)
-    except Exception:
+    except Exception as e:
+        print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
         sh.rm("-rf", patch)
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
