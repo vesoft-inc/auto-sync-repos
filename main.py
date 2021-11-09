@@ -98,6 +98,7 @@ def apply_patch(branch, comm_ci):
     print(f">>> Apply patch file to {branch}")
     stopped = False
     patch = f"{branch}.patch"
+    author = comm_ci.author()
     git.config("--local", "user.name", author.name)
     git.config("--local", "user.email", author.email)
     git.clean("-f")
