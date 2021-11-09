@@ -222,8 +222,8 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
         return (True, new_pr.number)
 
     except Exception as e:
-        print(e)
-        return (False, -1)
+        print(">>> Fail to merge PR {}, cause: {}".format(comm_ci.pr_num, e))
+        return (False, -1 if new_pr is None else new_pr.number)
 
 
 def get_org_name(repo):
@@ -266,6 +266,7 @@ def main(community_repo, enterprise_repo):
     succ_prs = '\n\n'.join(succ_pr_list) if succ_pr_list else "None"
     err_prs = '\n\n'.join(err_pr_list) if err_pr_list else "None"
 
+    print(">>> Enable dingtalk notification: {}".format(enable_dingtalk_notification))
     if enable_dingtalk_notification and (len(succ_pr_list) > 0 or len(err_pr_list) > 0):
         text = f"### Auto Merge Status\nMerge successfully:\n\n{succ_prs}\n\nFailed to merge:\n\n{err_prs}"
         dingtalk_bot.send_markdown(title='Auto Merge Status', text=text, is_at_all=False)
