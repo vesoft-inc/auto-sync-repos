@@ -94,16 +94,17 @@ def commit_changes(ci: Commit):
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
-def apply_patch(branch, comm_ci):
+def apply_patch(branch, comm_ci, comm_repo):
     print(f">>> Apply patch file to {branch}")
     stopped = False
-    patch = f"{branch}.patch"
     author = comm_ci.author()
     git.config("--local", "user.name", author.name)
     git.config("--local", "user.email", author.email)
     git.clean("-f")
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
+    git.remote('add', 'community', 'git@github.com:{}.git'.format(comm_repo.full_name))
+    git.fetch('community', 'master')
     git_commit = comm_ci.commit
     try:
         git('cherry-pick', git_commit)
@@ -198,7 +199,7 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
     try:
         merged_pr = comm_repo.get_pull(comm_ci.pr_num)
         branch = "pr-{}".format(merged_pr.number)
-        stopped = apply_patch(branch, comm_ci)
+        stopped = apply_patch(branch, comm_ci, comm_repo)
         body = append_migration_in_msg(comm_repo, merged_pr)
         new_pr = ent_repo.create_pull(title=comm_ci.title, body=body, head=branch, base="master")
 
