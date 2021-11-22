@@ -107,7 +107,7 @@ def apply_patch(branch, comm_ci, comm_repo):
     try:
         git.remote('add', 'community', 'https://github.com/{}.git'.format(comm_repo.full_name))
         git.fetch('community', 'master')
-        git('cherry-pick', git_commit)
+        git('cherry-pick', git_commit.sha)
     except Exception as e:
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
         overwrite_conflict_files(git_commit)
