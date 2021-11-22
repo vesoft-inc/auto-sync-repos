@@ -103,8 +103,6 @@ def apply_patch(branch, comm_ci, comm_repo):
     git.clean("-f")
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
-    git.remote('add', 'community', 'git@github.com:{}.git'.format(comm_repo.full_name))
-    git.fetch('community', 'master')
     git_commit = comm_ci.commit
     try:
         git.remote('add', 'community', 'https://github.com/{}.git'.format(comm_repo.full_name))
