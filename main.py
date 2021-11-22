@@ -105,13 +105,10 @@ def apply_patch(branch, comm_ci):
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
     git_commit = comm_ci.commit
-    sh.curl("-fsSL", git_commit.html_url+'.patch', "-o", patch)
     try:
-        git.am("--3way", patch)
-        sh.rm("-rf", patch)
+        git('cherry-pick', git_commit)
     except Exception as e:
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
-        sh.rm("-rf", patch)
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
         stopped = True
@@ -166,7 +163,7 @@ def append_migration_in_msg(repo, pr):
     return "{}\n\nMigrated from {}\n".format(body, pr_ref(repo, pr))
 
 
-def notify_author_by_comment(ent_repo, comm_ci, issue_num, comm_pr_num, org_members):
+def notify_author_by_comment(ent_repo, comm_repo, comm_ci, issue_num, comm_pr_num, org_members):
     comment = ""
     if comm_ci.login() in org_members:
         comment += f"@{comm_ci.login()}\n"
@@ -184,16 +181,17 @@ You can use following commands to resolve the conflicts locally:
 $ git clone git@github.com:{}.git
 $ cd {}
 $ git checkout -b pr-{} origin/master
-$ curl -fsSL "{}.patch" -o {}.patch
-$ git am -3 {}.patch
+$ git remote add community git@github.com:{}.git
+$ git fetch community master
+$ git cherry-pick {}
 # resolve the conflicts
-$ git am --continue
+$ git cherry-pick --continue
 $ git push -f origin pr-{}
 ```
 """
 
     issue = ent_repo.get_issue(issue_num)
-    issue.create_comment(comment.format(ent_repo.full_name, ent_repo.name, comm_pr_num, comm_ci.commit.html_url, comm_pr_num, comm_pr_num, comm_pr_num))
+    issue.create_comment(comment.format(ent_repo.full_name, ent_repo.name, comm_pr_num, comm_repo.full_name, comm_ci.commit.sha, comm_pr_num))
 
 
 def create_pr(comm_repo, ent_repo, comm_ci, org_members):
@@ -211,7 +209,7 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
         new_pr.add_to_labels('auto-sync')
 
         if stopped:
-            notify_author_by_comment(ent_repo, comm_ci, new_pr.number, comm_ci.pr_num, org_members)
+            notify_author_by_comment(ent_repo, comm_repo, comm_ci, new_pr.number, comm_ci.pr_num, org_members)
             return (False, new_pr.number)
 
         if not new_pr.mergeable:
