@@ -37,7 +37,7 @@ jobs:
     - uses: vesoft-inc/auto-sync-repos@master
       with:
         from_repo: vesoft-inc/nebula
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        repo_token: ${{ secrets.GH_PAT }}
         dingtalk_access_token: ${{ secrets.DING_ACCESS_TOKEN }}
         dingtalk_secret: ${{ secrets.DING_SECRET }}
 ```

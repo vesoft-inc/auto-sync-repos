@@ -106,6 +106,12 @@ def apply_patch(branch, comm_ci, comm_repo):
     git_commit = comm_ci.commit
 
     try:
+        git.remote('-vv')
+        git.remote('rm', 'community')
+    except:
+        print(">>> Remove the community remote")
+
+    try:
         git.remote('add', 'community', 'https://github.com/{}.git'.format(comm_repo.full_name))
         git.fetch('community', 'master')
     except Exception as e:
