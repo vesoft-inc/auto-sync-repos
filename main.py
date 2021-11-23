@@ -104,9 +104,15 @@ def apply_patch(branch, comm_ci, comm_repo):
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
     git_commit = comm_ci.commit
+
     try:
         git.remote('add', 'community', 'https://github.com/{}.git'.format(comm_repo.full_name))
         git.fetch('community', 'master')
+    except Exception as e:
+        print(">>> Fail to add remote, cause: {}".format(e))
+        raise
+
+    try:
         git('cherry-pick', git_commit.sha)
     except Exception as e:
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
