@@ -94,7 +94,7 @@ def commit_changes(ci: Commit):
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
-def apply_patch(branch, comm_ci, comm_repo):
+def apply_patch(branch, comm_ci):
     print(f">>> Apply patch file to {branch}")
     stopped = False
     author = comm_ci.author()
@@ -104,22 +104,6 @@ def apply_patch(branch, comm_ci, comm_repo):
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
     git_commit = comm_ci.commit
-    remote_url = 'https://github.com/{}.git'.format(comm_repo.full_name)
-    remote_name = 'community'
-
-    try:
-        git.remote('-vv')
-        git.remote('rm', remote_name)
-    except:
-        print(">>> The remote upstream({}) not found.".format(remote_name))
-
-    try:
-        git.remote('add', remote_name, remote_url)
-        git.fetch(remote_name, 'master')
-    except Exception as e:
-        print(">>> Fail to add remote, cause: {}".format(e))
-        raise
-
     try:
         git('cherry-pick', git_commit.sha)
     except Exception as e:
@@ -213,7 +197,7 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
     try:
         merged_pr = comm_repo.get_pull(comm_ci.pr_num)
         branch = "pr-{}".format(merged_pr.number)
-        stopped = apply_patch(branch, comm_ci, comm_repo)
+        stopped = apply_patch(branch, comm_ci)
         body = append_migration_in_msg(comm_repo, merged_pr)
         new_pr = ent_repo.create_pull(title=comm_ci.title, body=body, head=branch, base="master")
 
@@ -253,6 +237,24 @@ def get_repo_name(repo):
     return l[1]
 
 
+def add_community_upstream(comm_repo):
+    remote_url = 'https://github.com/{}.git'.format(comm_repo.full_name)
+    remote_name = 'community'
+
+    try:
+        git.remote('-vv')
+        git.remote('rm', remote_name)
+    except:
+        print(">>> The remote upstream({}) not found.".format(remote_name))
+
+    try:
+        git.remote('add', remote_name, remote_url)
+        git.fetch(remote_name, 'master')
+    except Exception as e:
+        print(">>> Fail to add remote, cause: {}".format(e))
+        raise
+
+
 def main(community_repo, enterprise_repo):
     comm_repo = gh.get_repo(community_repo)
     ent_repo = gh.get_repo(enterprise_repo)
@@ -261,6 +263,8 @@ def main(community_repo, enterprise_repo):
 
     unmerged_community_commits = find_unmerged_community_commits_in_ent_repo(comm_repo, ent_repo)
     unmerged_community_commits.reverse()
+
+    add_community_upstream(comm_repo)
 
     succ_pr_list = []
     err_pr_list = []
