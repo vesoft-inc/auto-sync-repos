@@ -104,9 +104,23 @@ def apply_patch(branch, comm_ci, comm_repo):
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
     git_commit = comm_ci.commit
+    remote_url = 'https://github.com/{}.git'.format(comm_repo.full_name)
+    remote_name = 'community'
+
     try:
-        git.remote('add', 'community', 'https://github.com/{}.git'.format(comm_repo.full_name))
-        git.fetch('community', 'master')
+        git.remote('-vv')
+        git.remote('rm', remote_name)
+    except:
+        print(">>> The remote upstream({}) not found.".format(remote_name))
+
+    try:
+        git.remote('add', remote_name, remote_url)
+        git.fetch(remote_name, 'master')
+    except Exception as e:
+        print(">>> Fail to add remote, cause: {}".format(e))
+        raise
+
+    try:
         git('cherry-pick', git_commit.sha)
     except Exception as e:
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
