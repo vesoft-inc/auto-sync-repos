@@ -79,7 +79,7 @@ def must_create_dir(filename):
 def overwrite_conflict_files(ci):
     print(">>> Overwrite PR conflict files")
     for f in ci.files:
-        if f.status == "removed":
+        if f.status == "removed" and os.path.exists(f.filename):
             git.rm('-rf', f.filename)
         else:
             must_create_dir(f.filename)
@@ -108,6 +108,7 @@ def apply_patch(branch, comm_ci):
         git('cherry-pick', git_commit.sha)
     except Exception as e:
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
+        git('cherry-pick', '--abort')
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
         stopped = True
