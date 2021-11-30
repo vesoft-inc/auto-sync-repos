@@ -158,9 +158,14 @@ def pr_link(repo, pr):
     return "[{}]({}/{}/pull/{})".format(pr_ref(repo, pr_num), gh_url, repo.full_name, pr_num)
 
 
-def append_migration_in_msg(repo, pr):
+def co_authored_by(author):
+    return "Co-authored-by: {} <{}>".format(author.name, author.email)
+
+
+def append_migration_in_msg(repo, ci, pr):
     body = pr.body if pr.body else ""
-    return "{}\n\nMigrated from {}\n".format(body, pr_ref(repo, pr))
+    coauthor = co_authored_by(ci.author())
+    return "{}\n\nMigrated from {}\n\n{}\n".format(body, pr_ref(repo, pr), coauthor)
 
 
 def notify_author_by_comment(ent_repo, comm_repo, comm_ci, issue_num, comm_pr_num, org_members):
@@ -199,7 +204,7 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
         merged_pr = comm_repo.get_pull(comm_ci.pr_num)
         branch = "pr-{}".format(merged_pr.number)
         stopped = apply_patch(branch, comm_ci)
-        body = append_migration_in_msg(comm_repo, merged_pr)
+        body = append_migration_in_msg(comm_repo, comm_ci, merged_pr)
         new_pr = ent_repo.create_pull(title=comm_ci.title, body=body, head=branch, base="master")
 
         print(f">>> Create PR: {pr_ref(ent_repo, new_pr)}")
