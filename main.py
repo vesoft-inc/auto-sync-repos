@@ -120,6 +120,9 @@ def find_latest_community_commit_in_ent_repo(ent_commit: Commit, community_commi
     assert ent_commit.is_valid()
     for ci in community_commits:
         assert ci.is_valid()
+        if ci.title == "fix meta crash after create space":
+            print('get pr3660')
+            continue
         if ent_commit.has_same_title(ci):
             return ci
     return Commit()
@@ -140,8 +143,6 @@ def find_unmerged_community_commits_in_ent_repo(community_repo, ent_repo):
     ent_commits = generate_latest_100_commits(ent_repo)
     community_commits = generate_latest_100_commits(community_repo)
     for ent_commit in ent_commits:
-        if ent_commit == "fix meta crash after create space":
-            continue
         ci = find_latest_community_commit_in_ent_repo(ent_commit, community_commits)
         if ci.is_valid():
             return community_commits[:community_commits.index(ci)]
