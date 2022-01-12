@@ -140,6 +140,8 @@ def find_unmerged_community_commits_in_ent_repo(community_repo, ent_repo):
     ent_commits = generate_latest_100_commits(ent_repo)
     community_commits = generate_latest_100_commits(community_repo)
     for ent_commit in ent_commits:
+        if ent_commit == "fix meta crash after create space":
+            continue
         ci = find_latest_community_commit_in_ent_repo(ent_commit, community_commits)
         if ci.is_valid():
             return community_commits[:community_commits.index(ci)]
