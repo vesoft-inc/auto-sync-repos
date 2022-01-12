@@ -122,7 +122,7 @@ def find_latest_community_commit_in_ent_repo(ent_commit: Commit, community_commi
         assert ci.is_valid()
         if ci.title == "fix meta crash after create space":
             print('get pr3660')
-            continue
+            return ci
         if ent_commit.has_same_title(ci):
             return ci
     return Commit()
