@@ -14,11 +14,11 @@ Sync all commits from one public repo to another private repo by creating pull r
 
 ### `dingtalk_access_token`
 
-**Required** The access token of dingtalk. Default `""`.
+**Optional** The access token of dingtalk. Default `""`.
 
 ### `dingtalk_secret`
 
-**Required** The secret of dingtalk. Default `""`.
+**Optional** The secret of dingtalk. Default `""`.
 
 ## Usage
 
