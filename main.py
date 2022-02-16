@@ -120,7 +120,7 @@ def find_latest_community_commit_in_ent_repo(ent_commit: Commit, community_commi
     assert ent_commit.is_valid()
     for ci in community_commits:
         assert ci.is_valid()
-        if ent_commit.has_same_title(ci):
+        if ent_commit.has_same_title(ci) and ent_commit.login() == gh.get_user().login:
             return ci
     return Commit()
 
