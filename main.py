@@ -94,11 +94,14 @@ def commit_changes(ci: Commit):
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
+def conflict_file_list(lines):
+    prefix = "CONFLICT (content): Merge conflict in "
+    return [l[len(prefix):] for l in lines if l.startswith(prefix)]
+
+
 def extract_conflict_files():
     with open('e.stdout') as f:
-        lines = f.readlines()
-        prefix = "CONFLICT (content): Merge conflict in "
-        return [l[len(prefix):] for l in lines if l.startswith(prefix)]
+        return conflict_file_list(f.readlines())
 
 
 def apply_patch(branch, comm_ci):
@@ -115,8 +118,12 @@ def apply_patch(branch, comm_ci):
     try:
         git('cherry-pick', git_commit.sha)
     except Exception as e:
-        print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
-        conflict_files = extract_conflict_files()
+        err = str(e)
+        print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, err))
+        if err.find('more, please see e.stdout') < 0:
+            conflict_files = conflict_file_list(err.splitlines())
+        else:
+            conflict_files = extract_conflict_files()
         git('cherry-pick', '--abort')
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
