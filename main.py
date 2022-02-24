@@ -94,6 +94,13 @@ def commit_changes(ci: Commit):
     git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
+def extract_conflict_files():
+    with open('e.stdout') as f:
+        lines = f.readlines()
+        prefix = "CONFLICT (content): Merge conflict in "
+        return [l[len(prefix):] for l in lines if l.startswith(prefix)]
+
+
 def apply_patch(branch, comm_ci):
     print(f">>> Apply patch file to {branch}")
     stopped = False
@@ -104,16 +111,18 @@ def apply_patch(branch, comm_ci):
     git.fetch("origin", "master")
     git.checkout("-b", branch, "origin/master")
     git_commit = comm_ci.commit
+    conflict_files = []
     try:
         git('cherry-pick', git_commit.sha)
     except Exception as e:
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, e))
+        conflict_files = extract_conflict_files()
         git('cherry-pick', '--abort')
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
         stopped = True
     git.push("-u", "origin", branch)
-    return stopped
+    return (stopped, conflict_files)
 
 
 def find_latest_community_commit_in_ent_repo(ent_commit: Commit, community_commits):
@@ -172,7 +181,7 @@ def append_migration_in_msg(repo, ci, pr):
     return "{}\n\nMigrated from {}\n\n{}\n".format(body, pr_ref(repo, pr), coauthor)
 
 
-def notify_author_by_comment(ent_repo, comm_repo, comm_ci, issue_num, comm_pr_num, org_members):
+def notify_author_by_comment(ent_repo, comm_repo, comm_ci, issue_num, comm_pr_num, org_members, conflict_files):
     comment = ""
     if comm_ci.login() in org_members:
         comment += f"@{comm_ci.login()}\n"
@@ -197,17 +206,28 @@ $ git cherry-pick {}
 $ git cherry-pick --continue
 $ git push -f origin pr-{}
 ```
+
+CONFLICT FILES:
+```text
+{}
+```
 """
 
     issue = ent_repo.get_issue(issue_num)
-    issue.create_comment(comment.format(ent_repo.full_name, ent_repo.name, comm_pr_num, comm_repo.full_name, comm_ci.commit.sha, comm_pr_num))
+    issue.create_comment(comment.format(ent_repo.full_name,
+                                        ent_repo.name,
+                                        comm_pr_num,
+                                        comm_repo.full_name,
+                                        comm_ci.commit.sha,
+                                        comm_pr_num,
+                                        '\n'.join(conflict_files)))
 
 
 def create_pr(comm_repo, ent_repo, comm_ci, org_members):
     try:
         merged_pr = comm_repo.get_pull(comm_ci.pr_num)
         branch = "pr-{}".format(merged_pr.number)
-        stopped = apply_patch(branch, comm_ci)
+        stopped, conflict_files = apply_patch(branch, comm_ci)
         body = append_migration_in_msg(comm_repo, comm_ci, merged_pr)
         new_pr = ent_repo.create_pull(title=comm_ci.title, body=body, head=branch, base="master")
 
@@ -218,7 +238,13 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
         new_pr.add_to_labels('auto-sync')
 
         if stopped:
-            notify_author_by_comment(ent_repo, comm_repo, comm_ci, new_pr.number, comm_ci.pr_num, org_members)
+            notify_author_by_comment(ent_repo,
+                                     comm_repo,
+                                     comm_ci,
+                                     new_pr.number,
+                                     comm_ci.pr_num,
+                                     org_members,
+                                     conflict_files)
             return (False, new_pr.number)
 
         if not new_pr.mergeable:
