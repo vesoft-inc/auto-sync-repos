@@ -99,11 +99,6 @@ def conflict_file_list(lines):
     return [l[len(prefix):] for l in lines if l.startswith(prefix)]
 
 
-def extract_conflict_files():
-    with open('e.stdout') as f:
-        return conflict_file_list(f.readlines())
-
-
 def apply_patch(branch, comm_ci):
     print(f">>> Apply patch file to {branch}")
     stopped = False
@@ -120,15 +115,20 @@ def apply_patch(branch, comm_ci):
     except Exception as e:
         err = str(e)
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, err))
-        if err.find('more, please see e.stdout') < 0:
-            conflict_files = conflict_file_list(err.splitlines())
+        if err.find('more, please see e.stdout') >= 0 and isinstance(e, sh.ErrorReturnCode):
+            conflict_files = conflict_file_list(e.stdout)
         else:
-            conflict_files = extract_conflict_files()
+            conflict_files = conflict_file_list(err.splitlines())
         git('cherry-pick', '--abort')
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
         stopped = True
-    git.push("-u", "origin", branch)
+
+    try:
+        git.push("-u", "origin", branch)
+    except Exception as e:
+        print(">>> Fail to push branch({}) to origin, caused by {}".format(branch, e))
+
     return (stopped, conflict_files)
 
 
@@ -262,7 +262,6 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
         if not status.merged:
             return (False, new_pr.number)
         return (True, new_pr.number)
-
     except Exception as e:
         print(">>> Fail to merge PR {}, cause: {}".format(comm_ci.pr_num, e))
         return (False, -1 if new_pr is None else new_pr.number)
