@@ -116,7 +116,9 @@ def apply_patch(branch, comm_ci):
         err = str(e)
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, err))
         if err.find('more, please see e.stdout') >= 0 and isinstance(e, sh.ErrorReturnCode):
-            conflict_files = conflict_file_list(e.stdout)
+            ee = sh.ErrorReturnCode(e)
+            print(">>> DEBUG: stdout of ErrorReturnCode: {}".format(ee.stdout))
+            conflict_files = conflict_file_list(ee.stdout)
         else:
             conflict_files = conflict_file_list(err.splitlines())
         git('cherry-pick', '--abort')
