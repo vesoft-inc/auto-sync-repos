@@ -112,15 +112,12 @@ def apply_patch(branch, comm_ci):
     conflict_files = []
     try:
         git('cherry-pick', git_commit.sha)
-    except Exception as e:
+    except sh.ErrorReturnCode as e:
         err = str(e)
         print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, err))
-        if err.find('more, please see e.stdout') >= 0 and isinstance(e, sh.ErrorReturnCode):
-            ee = sh.ErrorReturnCode(e)
-            print(">>> DEBUG: stdout of ErrorReturnCode: {}".format(ee.stdout))
-            conflict_files = conflict_file_list(ee.stdout)
-        else:
-            conflict_files = conflict_file_list(err.splitlines())
+        if err.find('more, please see e.stdout') >= 0:
+            err = e.stdout
+        conflict_files = conflict_file_list(err.splitlines())
         git('cherry-pick', '--abort')
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
@@ -128,7 +125,7 @@ def apply_patch(branch, comm_ci):
 
     try:
         git.push("-u", "origin", branch)
-    except Exception as e:
+    except sh.ErrorReturnCode as e:
         print(">>> Fail to push branch({}) to origin, caused by {}".format(branch, e))
 
     return (stopped, conflict_files)
