@@ -128,7 +128,12 @@ def apply_patch(branch, comm_ci):
         overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
         stopped = True
-    git.push("-u", "origin", branch)
+
+    try:
+        git.push("-u", "origin", branch)
+    except Exception as e:
+        print(">>> Fail to push branch({}) to origin, caused by {}".format(branch, e))
+
     return (stopped, conflict_files)
 
 
@@ -262,7 +267,6 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
         if not status.merged:
             return (False, new_pr.number)
         return (True, new_pr.number)
-
     except Exception as e:
         print(">>> Fail to merge PR {}, cause: {}".format(comm_ci.pr_num, e))
         return (False, -1 if new_pr is None else new_pr.number)
