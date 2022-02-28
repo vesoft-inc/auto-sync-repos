@@ -91,7 +91,7 @@ def commit_changes(ci: Commit):
     author = ci.author()
     print(f">>> Commit changes by <{author.email}>")
     git.add(".")
-    git.commit("-m", ci.title, "--author", f"{author.name} <{author.email}>")
+    git.commit("-nam", ci.title, "--author", f"{author.name} <{author.email}>")
 
 
 def conflict_file_list(lines):
@@ -118,8 +118,8 @@ def apply_patch(branch, comm_ci):
         if err.find('more, please see e.stdout') >= 0:
             err = e.stdout.decode()
         conflict_files = conflict_file_list(err.splitlines())
-        git('cherry-pick', '--abort')
-        overwrite_conflict_files(git_commit)
+        # git('cherry-pick', '--abort')
+        # overwrite_conflict_files(git_commit)
         commit_changes(comm_ci)
         stopped = True
 
@@ -204,12 +204,10 @@ You can use following commands to resolve the conflicts locally:
 ```shell
 $ git clone git@github.com:{}.git
 $ cd {}
-$ git checkout -b pr-{} origin/master
-$ git remote add community git@github.com:{}.git
-$ git fetch community master
-$ git cherry-pick {}
+$ git remote -vv
+$ git fetch origin pull/{}/head:pr-{}
+$ git checkout pr-{}
 # resolve the conflicts
-$ git cherry-pick --continue
 $ git push -f origin pr-{}
 ```
 
@@ -222,9 +220,9 @@ CONFLICT FILES:
     issue = ent_repo.get_issue(issue_num)
     issue.create_comment(comment.format(ent_repo.full_name,
                                         ent_repo.name,
+                                        issue_num,
                                         comm_pr_num,
-                                        comm_repo.full_name,
-                                        comm_ci.commit.sha,
+                                        comm_pr_num,
                                         comm_pr_num,
                                         '\n'.join(conflict_files)))
 
