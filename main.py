@@ -114,14 +114,17 @@ def apply_patch(branch, comm_ci):
         git('cherry-pick', git_commit.sha)
     except sh.ErrorReturnCode as e:
         err = str(e)
-        print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, err))
-        if err.find('more, please see e.stdout') >= 0:
-            err = e.stdout.decode()
-        conflict_files = conflict_file_list(err.splitlines())
-        # git('cherry-pick', '--abort')
-        # overwrite_conflict_files(git_commit)
-        commit_changes(comm_ci)
-        stopped = True
+        if err.find('git commit --allow-empty') >= 0:
+            git('commit', '--allow-empty', '--allow-empty-message', '--no-edit')
+        else:
+            print(">>> Fail to apply the patch to branch {}, cause: {}".format(branch, err))
+            if err.find('more, please see e.stdout') >= 0:
+                err = e.stdout.decode()
+            conflict_files = conflict_file_list(err.splitlines())
+            # git('cherry-pick', '--abort')
+            # overwrite_conflict_files(git_commit)
+            commit_changes(comm_ci)
+            stopped = True
 
     try:
         git.push("-u", "origin", branch)
