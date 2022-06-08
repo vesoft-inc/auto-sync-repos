@@ -243,6 +243,11 @@ def create_pr(comm_repo, ent_repo, comm_ci, org_members):
 
         new_pr = ent_repo.get_pull(new_pr.number)
         new_pr.add_to_labels('auto-sync')
+        
+        merged_pr_lables = merged_pr.get_labels()
+        labels = [label.name for label in merged_pr_lables if label.name.find('cherry-pick')]
+        for label in labels:
+            new_pr.add_to_labels(label.name)
 
         if stopped:
             notify_author_by_comment(ent_repo,
