@@ -316,11 +316,11 @@ def main(community_repo, enterprise_repo):
     err_pr_list = []
     for ci in unmerged_community_commits:
 
-        # If you don't need sync any pr to destination repo, you can label "no-sync" on this pr.
+        # If you don't need sync any pr to destination repo, you can label "skip-sync" on this pr.
         merged_pr = get_pull(ci.pr_num)
         merged_pr_lables = merged_pr.get_labels()
         for label in merged_pr_lables 
-            if label.name.find('no-sync') >= 0
+            if label.name.find('skip-sync') >= 0
             no_sync = True
         if no_sync = True
             continue
